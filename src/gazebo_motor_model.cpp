@@ -22,6 +22,7 @@
 #include "gazebo_motor_model.h"
 #include <ignition/math.hh>
 
+
 namespace gazebo {
 
 GazeboMotorModel::~GazeboMotorModel() {
@@ -35,6 +36,27 @@ void GazeboMotorModel::Publish() {
   turning_velocity_msg_.set_data(joint_->GetVelocity(0));
   // FIXME: Commented out to prevent warnings about queue limit reached.
   // motor_velocity_pub_->Publish(turning_velocity_msg_);
+
+
+  // ignition::math::Vector3d force = link_->WorldForce();
+  // ignition::math::Vector3d torque = link_->WorldTorque();
+
+  // geometry_msgs::WrenchStamped wrenchMsg;
+  // wrenchMsg.header.stamp = ros::Time::now();
+  // wrenchMsg.header.frame_id = link_name_;
+
+  // // Assign force and torque to the message
+  // wrenchMsg.wrench.force.x = force.X();
+  // wrenchMsg.wrench.force.y = force.Y();
+  // wrenchMsg.wrench.force.z = force.Z();
+
+  // wrenchMsg.wrench.torque.x = torque.X();
+  // wrenchMsg.wrench.torque.y = torque.Y();
+  // wrenchMsg.wrench.torque.z = torque.Z();
+
+  // // Publish the message
+  // motorforce_pub.publish(wrenchMsg);
+
 }
 
 void GazeboMotorModel::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
@@ -121,6 +143,10 @@ void GazeboMotorModel::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
     reversible_ = _sdf->GetElement("reversible")->Get<bool>();
   }
 
+  // if(_sdf->HasElement("rostopicName")) {
+  //   rostopic_name_ = _sdf->GetElement("rostopicName")->Get<std::string>();
+  // }
+
   getSdfParam<std::string>(_sdf, "commandSubTopic", command_sub_topic_, command_sub_topic_);
   getSdfParam<std::string>(_sdf, "motorSpeedPubTopic", motor_speed_pub_topic_,
                            motor_speed_pub_topic_);
@@ -153,11 +179,26 @@ void GazeboMotorModel::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   //std::cout << "[gazebo_motor_model]: Subscribe to gz topic: "<< motor_failure_sub_topic_ << std::endl;
   motor_failure_sub_ = node_handle_->Subscribe<msgs::Int>(motor_failure_sub_topic_, &GazeboMotorModel::MotorFailureCallback, this);
   // FIXME: Commented out to prevent warnings about queue limit reached.
-  //motor_velocity_pub_ = node_handle_->Advertise<std_msgs::msgs::Float>("~/" + model_->GetName() + motor_speed_pub_topic_, 1);
+  // motor_velocity_pub_ = node_handle_->Advertise<std_msgs::msgs::Float>("~/" + model_->GetName() + motor_speed_pub_topic_, 1);
   wind_sub_ = node_handle_->Subscribe("~/" + wind_sub_topic_, &GazeboMotorModel::WindVelocityCallback, this);
 
   // Create the first order filter.
   rotor_velocity_filter_.reset(new FirstOrderFilter<double>(time_constant_up_, time_constant_down_, ref_motor_rot_vel_));
+
+
+  // // Create our ROS node. This acts in a similar manner to
+  // // the Gazebo node
+  // rosNode.reset(new ros::NodeHandle("gazebo_client"));
+
+  // // Spin up the queue helper thread.
+  // rosQueueThread =
+  //   std::thread(std::bind(&GazeboMotorModel::QueueThread, this));
+
+  // motorforce_rostopic_name = "/" + model_->GetName() + "/" + link_name_ + "/force";
+  // motorforce_pub = rosNode->advertise<geometry_msgs::WrenchStamped>(motorforce_rostopic_name,1);
+
+
+
 }
 
 // Protobuf test
@@ -171,6 +212,8 @@ void GazeboMotorModel::testProto(MotorSpeedPtr &msg) {
   std::cout << std::endl;
 }
 */
+
+
 
 // This gets called by the world update start event.
 void GazeboMotorModel::OnUpdate(const common::UpdateInfo& _info) {
@@ -222,7 +265,7 @@ void GazeboMotorModel::UpdateForcesAndMoments() {
   scalar = ignition::math::clamp(scalar, 0.0, 1.0);
   // Apply a force to the link.
   link_->AddRelativeForce(ignition::math::Vector3d(0, 0, force * scalar));
-
+  // std::cout  << "Exerting force:"  << force*scalar << "." << std::endl;
   // Forces from Philppe Martin's and Erwan Salaün's
   // 2010 IEEE Conference on Robotics and Automation paper
   // The True Role of Accelerometer Feedback in Quadrotor Control
@@ -303,6 +346,16 @@ void GazeboMotorModel::WindVelocityCallback(WindPtr& msg) {
             msg->velocity().y(),
             msg->velocity().z());
 }
+
+
+// void GazeboMotorModel::QueueThread(){
+//   static const double timeout = 0.01;
+//   while (rosNode->ok())
+//   {
+//     rosQueue.callAvailable(ros::WallDuration(timeout));
+//   }
+// }
+
 
 GZ_REGISTER_MODEL_PLUGIN(GazeboMotorModel);
 }

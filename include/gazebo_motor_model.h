@@ -38,6 +38,16 @@
 
 #include "common.h"
 
+// #include <thread>
+// #include "ros/ros.h"
+// #include "ros/callback_queue.h"
+// #include "ros/subscribe_options.h"
+// #include "std_msgs/Float32.h"
+
+// #include <geometry_msgs/WrenchStamped.h>  // For force and torque data
+
+
+
 
 namespace turning_direction {
 const static int CCW = 1;
@@ -84,6 +94,7 @@ class GazeboMotorModel : public MotorModel, public ModelPlugin {
   virtual void InitializeParams();
   virtual void Publish();
   //void testProto(MotorSpeedPtr &msg);
+
  protected:
   virtual void UpdateForcesAndMoments();
   /// \brief A function to check the motor_Failure_Number_ and stimulate motor fail
@@ -105,6 +116,18 @@ class GazeboMotorModel : public MotorModel, public ModelPlugin {
 
   int motor_Failure_Number_{0}; /*!< motor_Failure_Number is (motor_number_ + 1) as (0) is considered no_fail. Publish accordingly */
   int tmp_motor_num; // A temporary variable used to print msg
+
+  // float motor_force;
+
+  // std::string rostopic_name_;
+
+  // ros::CallbackQueue rosQueue;
+
+  // std::unique_ptr<ros::NodeHandle> rosNode;
+  // std::thread rosQueueThread;
+  // std::string motorforce_rostopic_name;
+  // ros::Publisher motorforce_pub;
+
 
   int screen_msg_flag = 1;
 
